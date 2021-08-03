@@ -4,11 +4,12 @@
 #include <type_traits>
 
 namespace sup {
-template<typename T, typename U>
-concept Forwarded = std::same_as<std::remove_reference_t<T>, U>;
-
 template<typename T>
 using RemoveCRef = std::remove_const_t<std::remove_reference_t<T>>;
+
+template<typename T, typename U>
+concept Forwarded = std::constructible_from<U, T&&> &&
+	std::same_as<RemoveCRef<T>, RemoveCRef<U>>;
 
 template<typename T, template<typename...> typename C>
 class [[deprecated("use C++20 `requires` instead")]] Detect {
