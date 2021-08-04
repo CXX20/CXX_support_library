@@ -8,8 +8,8 @@ template<typename T>
 using RemoveCRef = std::remove_const_t<std::remove_reference_t<T>>;
 
 template<typename T, typename U>
-concept Forwarded = std::constructible_from<U, T&&> &&
-	std::same_as<RemoveCRef<T>, RemoveCRef<U>>;
+concept Fwd = std::same_as<RemoveCRef<T>, RemoveCRef<U>> &&
+	std::constructible_from<U, T&&>;
 
 template<typename T, template<typename...> typename C>
 class [[deprecated("use C++20 `requires` instead")]] Detect {
@@ -21,5 +21,5 @@ public:
 	static bool constexpr value{test(42)};
 };
 template<typename T, template<typename...> typename C>
-auto constexpr detected = Detect<T, C>::value;
+auto constexpr detect_v = Detect<T, C>::value;
 } // namespace sup

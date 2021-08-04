@@ -24,7 +24,7 @@ template<typename... Fs> struct Overload: public Fs... {
 template<typename F> class Defer {
 	F action;
 public:
-	Defer(Forwarded<F> auto&& src): action{SUP_FWD(src)} {}
+	Defer(Fwd<F> auto&& src): action{SUP_FWD(src)} {}
 	Defer(Defer const&) = delete;
 	~Defer() noexcept(noexcept(action())) { action(); }
 };
