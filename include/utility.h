@@ -11,10 +11,9 @@ requires requires { SUP_FWD(a) == SUP_FWD(b); } {
 	return !(SUP_FWD(a) == SUP_FWD(b));
 } // TODO remove explicit `template`
 
-template<typename T> struct Type { using type = T; };
-template<typename T> Type<T> constexpr type_v;
+template<typename T> std::type_identity_t<T> constexpr type_v;
 
-template<auto v> struct Value { static auto constexpr value = v; };
+template<auto v> struct Value: std::integral_constant<decltype(v), v> {};
 template<auto v> Value<v> constexpr value_v;
 
 template<typename... Fs> struct Overload: public Fs... {
@@ -22,11 +21,15 @@ template<typename... Fs> struct Overload: public Fs... {
 };
 
 template<typename F> class Defer {
-	F action;
+	F const action;
 public:
 	Defer(Fwd<F> auto&& src): action{SUP_FWD(src)} {}
-	Defer(Defer const&) = delete;
 	~Defer() noexcept(noexcept(action())) { action(); }
 };
 template<typename F> Defer(F&&) -> Defer<F>;
+
+template<typename T>
+struct [[deprecated("use C++20 `std::type_identity_t` instead")]] Type {
+	using type = T;
+};
 } // namespace sup
