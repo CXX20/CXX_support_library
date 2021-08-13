@@ -6,9 +6,9 @@
 #define SUP_FWD(...) (::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__))
 
 namespace sup {
-template<typename T, typename U> constexpr auto operator!=(T&& a, U&& b)
-requires requires { SUP_FWD(a) == SUP_FWD(b); } {
-	return !(SUP_FWD(a) == SUP_FWD(b));
+template<typename T, typename U> constexpr auto operator!=(T&& t, U&& u)
+requires requires { SUP_FWD(t) == SUP_FWD(u); } {
+	return !(SUP_FWD(t) == SUP_FWD(u));
 } // TODO remove explicit `template`
 
 template<typename T> std::type_identity_t<T> constexpr type_v;
