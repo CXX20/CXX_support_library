@@ -13,7 +13,7 @@ requires requires { SUP_FWD(t) == SUP_FWD(u); } {
 
 template<typename T> std::type_identity_t<T> constexpr type_v;
 
-template<auto v> struct Value: std::integral_constant<decltype(v), v> {};
+template<auto v> using Value = std::integral_constant<decltype(v), v>;
 template<auto v> Value<v> constexpr value_v;
 
 template<typename... Fs> struct Overload: public Fs... {
