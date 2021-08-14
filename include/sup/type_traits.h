@@ -8,7 +8,7 @@ template<typename T, typename U>
 concept Fwd = std::constructible_from<U, T&&> &&
 	std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
 
-template<typename T> std::type_identity_t<T> constexpr type_v;
+template<typename T> std::type_identity<T> constexpr type_v;
 
 template<auto v> using Value = std::integral_constant<decltype(v), v>;
 template<auto v> Value<v> constexpr value_v;
