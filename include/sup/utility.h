@@ -16,9 +16,10 @@ template<typename... Fs> struct Overload: public Fs... {
 };
 
 template<typename F> class Defer {
-	F const action;
+	F action;
 public:
 	Defer(Fwd<F> auto&& src): action{SUP_FWD(src)} {}
+	Defer(Defer const&) = delete;
 	~Defer() noexcept(noexcept(action())) { action(); }
 };
 template<typename F> Defer(F&&) -> Defer<F>;
