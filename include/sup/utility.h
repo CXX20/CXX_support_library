@@ -1,6 +1,7 @@
 #pragma once
 
 #include "type_traits.h"
+#include <exception>
 #include <utility>
 
 #define SUP_FWD(...) (::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__))
@@ -11,16 +12,32 @@ requires requires { SUP_FWD(t) == SUP_FWD(u); } {
 	return !(SUP_FWD(t) == SUP_FWD(u));
 } // TODO remove explicit `template`
 
-template<typename... Fs> struct Overload: public Fs... {
-	using Fs::operator()...;
-};
+template<typename... Fs> struct Overload: Fs... { using Fs::operator()...; };
 
 template<typename F> class Defer {
 	F action;
 public:
-	Defer(Fwd<F> auto&& src): action{SUP_FWD(src)} {}
+	Defer(F src): action{std::move(src)} {}
 	Defer(Defer const&) = delete;
-	~Defer() noexcept(noexcept(action())) { action(); }
+	~Defer() noexcept(noexcept(std::move(action)())) { std::move(action)(); }
 };
-template<typename F> Defer(F&&) -> Defer<F>;
+
+template<typename C, typename M> class MemberRef {
+	M C::* raw;
+
+public:
+	consteval MemberRef(M C::* p): raw{p} { if (!p) throw std::exception{}; }
+
+	constexpr decltype(auto) operator()(auto&& instance, auto&&... args) const
+	requires requires { (instance.*raw)(SUP_FWD(args)...); } {
+		return (instance.*raw)(SUP_FWD(args)...);
+	}
+	constexpr auto&& operator()(Fwd<C> auto&& instance) const
+	requires std::is_member_object_pointer_v<M C::*> {
+		return SUP_FWD(instance).*raw;
+	}
+	
+	constexpr auto get() const { return raw; }
+	explicit constexpr operator M C::*() const { return get(); }
+};
 } // namespace sup
