@@ -7,6 +7,8 @@
 #define SUP_FWD(...) (::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__))
 
 namespace sup {
+/// The core C++20 `t != u` -> `!(t == u)` conversion requires
+/// `{ t == u; } -> same_as<bool>`. This function is a polymorphic analogue.
 template<typename T, typename U> constexpr auto operator!=(T&& t, U&& u)
 requires requires { SUP_FWD(t) == SUP_FWD(u); } {
 	return !(SUP_FWD(t) == SUP_FWD(u));
