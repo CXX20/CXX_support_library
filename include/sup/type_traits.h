@@ -5,6 +5,9 @@
 
 namespace sup {
 template<typename T, typename U>
+concept InitsDirectly = requires(T t) { U{t}; };
+
+template<typename T, typename U>
 concept Fwd = std::constructible_from<U, T&&> &&
 	std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
 
