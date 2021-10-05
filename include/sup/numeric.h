@@ -49,6 +49,18 @@ public:
 template<typename T> Num(T) -> Num<T>;
 template<typename T> requires requires { T::value; } Num(T) ->
 	Num<std::remove_cvref_t<decltype(T::value)>>;
+
+using Size = Num<std::size_t>;
+#if CHAR_BIT == 8
+using I8  = Num<std::int8_t>;
+using I16 = Num<std::int16_t>;
+using I32 = Num<std::int32_t>;
+using I64 = Num<std::int64_t>;
+using U8  = Num<std::uint8_t>;
+using U16 = Num<std::uint16_t>;
+using U32 = Num<std::uint32_t>;
+using U64 = Num<std::uint64_t>;
+#endif
 } // namespace sup
 
 namespace std {
