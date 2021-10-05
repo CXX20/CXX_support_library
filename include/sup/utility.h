@@ -15,6 +15,7 @@ requires requires { SUP_FWD(t) == SUP_FWD(u); } {
 } // TODO remove explicit `template`
 
 template<typename... Fs> struct Overload: Fs... { using Fs::operator()...; };
+template<typename... Fs> Overload(Fs...) -> Overload<Fs...>;
 
 template<typename F> class Defer {
 	F action;
@@ -24,11 +25,11 @@ public:
 	~Defer() noexcept(noexcept(std::move(action)())) { std::move(action)(); }
 };
 
-template<typename C, typename M> class MemberRef {
+template<typename C, typename M> class Member {
 	M C::* raw;
 
 public:
-	consteval MemberRef(M C::* p): raw{p} { if (!p) throw std::exception{}; }
+	consteval Member(M C::* p): raw{p} { if (!p) throw std::exception{}; }
 
 	constexpr decltype(auto) operator()(auto&& instance, auto&&... args) const
 	requires requires { (instance.*raw)(SUP_FWD(args)...); } {
