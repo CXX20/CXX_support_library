@@ -3,7 +3,6 @@
 #include "utility.h"
 #include <functional>
 #include <limits>
-#include <tuple>
 
 namespace sup {
 template<std::integral T> class Num { // TODO float, bool, T*, non-fundamental
