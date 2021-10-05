@@ -6,7 +6,7 @@
 #include <tuple>
 
 namespace sup {
-template<std::integral T> class Num { // TODO floating-point, `bool`, `T*`
+template<std::integral T> class Num { // TODO float, bool, T*, non-fundamental
 	T raw{};
 
 	template<typename F> constexpr auto& op_eq(Num const t, F op) {
@@ -18,7 +18,7 @@ template<std::integral T> class Num { // TODO floating-point, `bool`, `T*`
 	}
 
 public:
-	template<typename U = T> constexpr Num(U const u = {})
+	template<typename U = T> constexpr Num(U const& u = {})
 	requires (InitsDirectly<U, T> || requires { T{U::value}; }) {
 		if constexpr (!InitsDirectly<U, T>) raw = U::value; else raw = u;
 	}
@@ -34,15 +34,16 @@ public:
 	friend constexpr auto operator*(Num a, Num const b) { return a *= b; }
 	friend constexpr auto operator/(Num a, Num const b) { return a /= b; }
 	friend constexpr auto operator%(Num a, Num const b) { return a %= b; }
-	constexpr auto& operator++() { return *this += value_v<1>; }
-	constexpr auto& operator--() { return *this -= value_v<1>; }
+	constexpr auto& operator++() { return ++raw, *this; }
+	constexpr auto& operator--() { return --raw, *this; }
 	constexpr Num operator++(int) { return raw++; }
 	constexpr Num operator--(int) { return raw--; }
-	constexpr Num operator-() const { return static_cast<T>(-raw); }
+	constexpr Num operator-() const requires std::signed_integral<T> {
+		return static_cast<T>(-raw);
+	}
 
 	constexpr auto operator<=>(Num const&) const = default;
-
-	constexpr auto get() const { return raw; }
+	
 	explicit constexpr operator T() const { return raw; }
 	explicit constexpr operator bool() const { return !!raw; }
 };
