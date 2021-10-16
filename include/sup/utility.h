@@ -1,7 +1,9 @@
 #pragma once
 
 #include "type_traits.h"
+#include <cassert>
 #include <exception>
+#include <memory>
 #include <utility>
 
 #define SUP_FWD(...) (::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__))
@@ -14,16 +16,26 @@ requires requires { SUP_FWD(t) == SUP_FWD(u); } {
 	return !(SUP_FWD(t) == SUP_FWD(u));
 } // TODO remove explicit `template`
 
+template<typename T> class Uninit {
+	std::aligned_storage_t<sizeof(T), alignof(T)> storage;
+public:
+	void init(auto&&... args) requires requires { T{SUP_FWD(args)...}; } {
+		new (&storage) T{SUP_FWD(args)...};
+	}
+	T& get() & { return *std::launder(reinterpret_cast<T*>(&storage)); }
+};
+
 template<typename... Fs> struct Overload: Fs... { using Fs::operator()...; };
 template<typename... Fs> Overload(Fs...) -> Overload<Fs...>;
 
 template<typename F> class Defer {
 	F action;
 public:
-	Defer(F src): action{std::move(src)} {}
+	Defer(Convertible<F> auto&& src): action{SUP_FWD(src)} {}
 	Defer(Defer const&) = delete;
-	~Defer() noexcept(noexcept(std::move(action)())) { std::move(action)(); }
+	~Defer() noexcept(noexcept(action())) { action(); }
 };
+template<typename F> Defer(F&&) -> Defer<F>;
 
 template<typename C, typename M> class Member {
 	M C::* raw;

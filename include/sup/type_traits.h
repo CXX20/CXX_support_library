@@ -19,17 +19,21 @@ template<typename T, typename... Us> auto constexpr find_v = [] {
 }();
 } // namespace pack
 
-template<typename T, typename U>
-concept InitsDirectly = requires(T t) { U{t}; };
+template<typename T> concept Typish =
+	requires { std::declval<typename T::type>(); };
 
-template<typename T, typename U>
-concept Fwd = std::constructible_from<U, T&&> &&
-	std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
+template<typename T, typename... As> concept Constructible =
+	requires(As&&... args) { T{SUP_FWD(args)...}; };
+template<typename T, typename U> concept Convertible =
+	requires(T t) { U{t}; };
+template<typename T, typename U> concept Fwd =
+	std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>> &&
+	Convertible<T&&, U>;
 
 template<typename T> std::type_identity<T> constexpr type_v;
 
-template<auto v> using Value = std::integral_constant<decltype(v), v>;
-template<auto v> Value<v> constexpr value_v;
+template<auto t> using Value = std::integral_constant<decltype(t), t>;
+template<auto t> Value<t> constexpr value_v;
 
 template<typename T, template<typename...> typename C>
 class [[deprecated("use C++20 `requires` instead")]] Detect {

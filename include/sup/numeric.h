@@ -18,10 +18,10 @@ template<std::integral T> class Num { // TODO float, bool, T*, non-fundamental
 
 public:
 	template<typename U = T> constexpr Num(U const& u = {})
-	requires (InitsDirectly<U, T> || requires { T{U::value}; }) {
-		if constexpr (!InitsDirectly<U, T>) raw = U::value; else raw = u;
+	requires (Convertible<U, T> || requires { T{U::value}; }) {
+		if constexpr (!Convertible<U, T>) raw = U::value; else raw = u;
 	}
-	template<InitsDirectly<T> U> constexpr Num(Num<U> const& u): raw{U{u}} {}
+	template<Convertible<T> U> constexpr Num(Num<U> const& u): raw{U{u}} {}
 
 	constexpr auto& operator+=(Num t) { return op_eq(t, std::plus{}); }
 	constexpr auto& operator-=(Num t) { return op_eq(t, std::minus{}); }
@@ -42,7 +42,7 @@ public:
 	}
 
 	constexpr auto operator<=>(Num const&) const = default;
-	
+
 	explicit constexpr operator T() const { return raw; }
 	explicit constexpr operator bool() const { return !!raw; }
 };
