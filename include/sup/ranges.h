@@ -11,12 +11,6 @@ template<typename T> concept HasBegin = HasBeginMember<T> || HasBeginAdl<T>;
 template<typename T> concept HasEndMember = requires(T t) { t.end(); };
 template<typename T> concept HasEndAdl = requires(T t) { end(t); };
 template<typename T> concept HasEnd = HasEndMember<T> || HasEndAdl<T>;
-
-template<typename T> concept HasSizeMember = requires(T t) { t.size(); };
-template<typename T> concept HasSizeAdl = requires(T t) { size(t); };
-template<typename T> concept HasSizeIt = requires(T t) { end(t) - begin(t); };
-template<typename T> concept HasSizeFn = HasSizeMember<T> || HasSizeAdl<T>;
-template<typename T> concept HasSize = HasSizeFn<T> || HasSizeIt<T>;
 } // namespace impl
 
 constexpr auto begin(impl::HasBegin auto&& t) { return begin(t); }
@@ -26,6 +20,14 @@ template<typename T, auto n> constexpr auto begin(T (&t)[n]) { return t; }
 constexpr auto end(impl::HasEnd auto&& t) { return end(t); }
 constexpr auto end(impl::HasEndMember auto&& t) { return t.end(); }
 template<typename T, auto n> constexpr auto end(T (&t)[n]) { return t + n; }
+
+namespace impl {
+template<typename T> concept HasSizeMember = requires(T t) { t.size(); };
+template<typename T> concept HasSizeAdl = requires(T t) { size(t); };
+template<typename T> concept HasSizeIt = requires(T t) { end(t) - begin(t); };
+template<typename T> concept HasSizeFn = HasSizeMember<T> || HasSizeAdl<T>;
+template<typename T> concept HasSize = HasSizeFn<T> || HasSizeIt<T>;
+} // namespace impl
 
 constexpr auto size(impl::HasSize auto&& t) { return end(t) - begin(t); }
 constexpr auto size(impl::HasSizeFn auto&& t) { return size(t); }
