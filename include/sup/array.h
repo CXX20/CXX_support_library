@@ -5,7 +5,7 @@
 
 namespace sup {
 template<typename T, std::size_t n> class Arr {
-	T raw[n ? n : 1];
+	std::conditional_t<n != 0, T[n], T*> raw;
 	template<auto... is> constexpr Arr(std::index_sequence<is...>, auto iter)
 	: raw{((void)is, *iter++)...} {}
 public:
@@ -16,10 +16,12 @@ public:
 	: Arr{std::make_index_sequence<n>{}, std::ranges::begin(range)} {
 		assert(std::ranges::size(range) >= n);
 	}
+	constexpr T const* begin() const { return raw; }
+	constexpr T const* end() const { return raw + n; }
+	constexpr T* begin() { return raw; }
+	constexpr T* end() { return raw + n; }
 	constexpr auto& operator[](std::size_t const i) const { return raw[i]; }
 	constexpr auto& operator[](std::size_t const i) { return raw[i]; }
-	friend constexpr auto begin(Fwd<Arr> auto& self) { return self.raw; }
-	friend constexpr auto end(Fwd<Arr> auto& self) { return self.raw + n; }
 	template<auto i> friend constexpr auto&& get(Fwd<Arr> auto&& self) {
 		static_assert(i < n);
 		return forward_as<decltype(self)>(self[i]);
