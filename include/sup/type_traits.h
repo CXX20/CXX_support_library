@@ -1,9 +1,10 @@
 #pragma once
 
-#include <array>
 #include <concepts>
 #include <type_traits>
 #include <tuple>
+
+#define SUP_FWD(...) (::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__))
 
 namespace sup {
 namespace pack {
@@ -14,13 +15,10 @@ template<auto i, typename... Ts> using At =
 	std::tuple_element_t<i, std::tuple<Ts...>>;
 
 template<typename T, typename... Us> auto constexpr find_v = [] {
-	std::array constexpr which{std::same_as<T, Us>...};
+	bool constexpr which[]{std::same_as<T, Us>...};
 	for (auto& b: which) if (b) return &b - which.data();
 }();
 } // namespace pack
-
-template<typename T> concept Typish =
-	requires { std::declval<typename T::type>(); };
 
 template<typename T, typename... As> concept Constructible =
 	requires(As&&... args) { T{SUP_FWD(args)...}; };
@@ -31,6 +29,8 @@ template<typename T, typename U> concept Fwd =
 	Convertible<T&&, U>;
 
 template<typename T> std::type_identity<T> constexpr type_v;
+
+template<typename T> concept Typish = requires { type_v<typename T::type>; };
 
 template<auto t> using Value = std::integral_constant<decltype(t), t>;
 template<auto t> Value<t> constexpr value_v;

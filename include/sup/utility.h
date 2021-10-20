@@ -1,39 +1,40 @@
 #pragma once
 
 #include "type_traits.h"
-#include <cassert>
 #include <exception>
 #include <memory>
+#include <ranges>
 #include <utility>
 
-#define SUP_FWD(...) (::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__))
-
 namespace sup {
+template<typename T, typename U>
+concept RangeOf = std::ranges::range<T> && requires(T t) {
+	requires std::same_as<
+			U, std::remove_cvref_t<decltype(*std::ranges::begin(t))>>;
+};
+
+template<typename T> constexpr auto&& forward_as(auto&& u) {
+	if constexpr (std::is_lvalue_reference_v<T>) {
+		static_assert(!std::is_rvalue_reference_v<decltype(u)>);
+		return u;
+	} else return std::move(u);
+}
+
 /// The core C++20 `t != u` -> `!(t == u)` conversion requires
 /// `{ t == u; } -> same_as<bool>`. This function is a polymorphic analogue.
 template<typename T, typename U> constexpr auto operator!=(T&& t, U&& u)
 requires requires { SUP_FWD(t) == SUP_FWD(u); } {
 	return !(SUP_FWD(t) == SUP_FWD(u));
-} // TODO remove explicit `template`
-
-template<typename T> class Uninit {
-	std::aligned_storage_t<sizeof(T), alignof(T)> storage;
-public:
-	void init(auto&&... args) requires requires { T{SUP_FWD(args)...}; } {
-		new (&storage) T{SUP_FWD(args)...};
-	}
-	T& get() & { return *std::launder(reinterpret_cast<T*>(&storage)); }
-};
+} // TODO remove raw `template`
 
 template<typename... Fs> struct Overload: Fs... { using Fs::operator()...; };
-template<typename... Fs> Overload(Fs...) -> Overload<Fs...>;
 
 template<typename F> class Defer {
 	F action;
 public:
-	Defer(Convertible<F> auto&& src): action{SUP_FWD(src)} {}
+	constexpr Defer(Convertible<F> auto&& src): action{SUP_FWD(src)} {}
 	Defer(Defer const&) = delete;
-	~Defer() noexcept(noexcept(action())) { action(); }
+	constexpr ~Defer() noexcept(noexcept(action())) { action(); }
 };
 template<typename F> Defer(F&&) -> Defer<F>;
 
@@ -53,6 +54,6 @@ public:
 	}
 	
 	constexpr auto get() const { return raw; }
-	explicit constexpr operator M C::*() const { return get(); }
+	constexpr explicit operator M C::*() const { return get(); }
 };
 } // namespace sup

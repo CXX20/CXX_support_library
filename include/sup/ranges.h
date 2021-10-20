@@ -1,96 +1,66 @@
 #pragma once
 
 #include "type_traits.h"
+#include <stdexcept>
 
-namespace sup {
+namespace sup { // TODO remove `impl` concepts
 namespace impl {
-template<typename T> concept HasBeginMember = requires(T t) { t.begin(); };
-template<typename T> concept HasBeginAdl = requires(T t) { begin(t); };
-template<typename T> concept HasBegin = HasBeginMember<T> || HasBeginAdl<T>;
+template<typename R> concept HasBeginMember = requires(R r) { r.begin(); };
+template<typename R> concept HasBeginAdl = requires(R r) { begin(r); };
+template<typename R> concept HasBegin = HasBeginMember<R> || HasBeginAdl<R>;
 
-template<typename T> concept HasEndMember = requires(T t) { t.end(); };
-template<typename T> concept HasEndAdl = requires(T t) { end(t); };
-template<typename T> concept HasEnd = HasEndMember<T> || HasEndAdl<T>;
+template<typename R> concept HasEndMember = requires(R r) { r.end(); };
+template<typename R> concept HasEndAdl = requires(R r) { end(r); };
+template<typename R> concept HasEnd = HasEndMember<R> || HasEndAdl<R>;
 } // namespace impl
 
-constexpr auto begin(impl::HasBegin auto&& t) { return begin(t); }
-constexpr auto begin(impl::HasBeginMember auto&& t) { return t.begin(); }
-template<typename T, auto n> constexpr auto begin(T (&t)[n]) { return t; }
+constexpr auto begin(impl::HasBegin auto&& r) { return begin(r); }
+constexpr auto begin(impl::HasBeginMember auto&& r) { return r.begin(); }
+template<typename R, auto n> constexpr auto begin(R (&r)[n]) { return r; }
 
-constexpr auto end(impl::HasEnd auto&& t) { return end(t); }
-constexpr auto end(impl::HasEndMember auto&& t) { return t.end(); }
-template<typename T, auto n> constexpr auto end(T (&t)[n]) { return t + n; }
+constexpr auto end(impl::HasEnd auto&& r) { return end(r); }
+constexpr auto end(impl::HasEndMember auto&& r) { return r.end(); }
+template<typename R, auto n> constexpr auto end(R (&r)[n]) { return r + n; }
 
 namespace impl {
-template<typename T> concept HasSizeMember = requires(T t) { t.size(); };
-template<typename T> concept HasSizeAdl = requires(T t) { size(t); };
-template<typename T> concept HasSizeIt = requires(T t) { end(t) - begin(t); };
-template<typename T> concept HasSizeFn = HasSizeMember<T> || HasSizeAdl<T>;
-template<typename T> concept HasSize = HasSizeFn<T> || HasSizeIt<T>;
+template<typename R> concept HasSizeMember = requires(R r) { r.size(); };
+template<typename R> concept HasSizeAdl = requires(R r) { size(r); };
+template<typename R> concept HasSizeIt = requires(R r) { end(r) - begin(r); };
+template<typename R> concept HasSizeFn = HasSizeMember<R> || HasSizeAdl<R>;
+template<typename R> concept HasSize = HasSizeFn<R> || HasSizeIt<R>;
 } // namespace impl
 
-constexpr auto size(impl::HasSize auto&& t) { return end(t) - begin(t); }
-constexpr auto size(impl::HasSizeFn auto&& t) { return size(t); }
-constexpr auto size(impl::HasSizeMember auto&& t) { return t.size(); }
+constexpr auto size(impl::HasSize auto&& r) { return end(r) - begin(r); }
+constexpr auto size(impl::HasSizeFn auto&& r) { return size(r); }
+constexpr auto size(impl::HasSizeMember auto&& r) { return r.size(); }
 
-template<typename T> using BeginOf = decltype(sup::begin(std::declval<T>()));
-template<typename T> using EndOf = decltype(sup::end(std::declval<T>()));
+template<typename R> using BeginOf = decltype(sup::begin(std::declval<R>()));
+template<typename R> using EndOf = decltype(sup::end(std::declval<R>()));
+template<typename R> using SizeOf = decltype(sup::size(std::declval<R>()));
 
-template<typename T> concept Range =
-	requires(T t) { sup::begin(t); } && requires(T t) { sup::end(t); };
-template<typename T> concept BidirRange =
-	Range<T> && requires(BeginOf<T> it) { --it; };
+template<typename R> concept Range =
+	requires(R r) { sup::begin(r); } && requires(R r) { sup::end(r); };
+template<typename R> concept BidirRange =
+	Range<R> && requires(BeginOf<R> it) { --it; };
+template<typename R> concept RaRange =
+	Range<R> && requires(R r) { r[SizeOf<R>{}]; };
 
-constexpr auto empty(Range auto&& t) { return sup::begin(t) == sup::end(t); }
+constexpr auto empty(Range auto&& r) { return sup::begin(r) == sup::end(r); }
 
-constexpr auto rbegin(BidirRange auto&& t) {
-	return std::reverse_iterator{sup::end(t)};
+constexpr auto rbegin(BidirRange auto&& r) {
+	return std::reverse_iterator{sup::end(r)};
+} // TODO prefer `r*` members/ADL
+constexpr auto rend(BidirRange auto&& r) {
+	return std::reverse_iterator{sup::begin(r)};
 }
-constexpr auto rend(BidirRange auto&& t) {
-	return std::reverse_iterator{sup::begin(t)};
-}
-constexpr auto cbegin(Range auto const& t) { return sup::begin(t); }
-constexpr auto cend(Range auto const& t) { return sup::end(t); }
-constexpr auto crbegin(BidirRange auto const& t) { return sup::rbegin(t); }
-constexpr auto crend(BidirRange auto const& t) { return sup::rend(t); }
+constexpr auto cbegin(Range auto const& r) { return sup::begin(r); }
+constexpr auto cend(Range auto const& r) { return sup::end(r); }
+constexpr auto crbegin(BidirRange auto const& r) { return sup::rbegin(r); }
+constexpr auto crend(BidirRange auto const& r) { return sup::rend(r); }
 
-constexpr decltype(auto) front(Range auto&& t) { return *sup::begin(t); }
-constexpr decltype(auto) back(BidirRange auto&& t) { return *sup::rbegin(t); }
-
-template<typename R> class View {
-	BeginOf<R> from{};
-	EndOf<R> to{};
-public:
-	constexpr View() {}
-	constexpr View(BeginOf<R> const a, EndOf<R> const b): from{a}, to{b} {}
-	constexpr View(R& range): View{sup::begin(range), sup::end(range)} {}
-	constexpr auto begin() const { return from; }
-	constexpr auto end() const { return to; }
-	constexpr auto operator==(View<R> const& other) const {
-		return from == other.from && to == other.to;
-	}
-};
-
-template<typename T> class IntView {
-	class End {
-		friend class IntView;
-		T limit;
-		constexpr End(T const limit): limit{limit} {}
-	};
-	class Begin {
-		friend class IntView;
-		T cur{}, step{};
-		constexpr Begin(T const cur, T const step): cur{cur}, step{step} {}
-	public:
-		constexpr auto operator*() const { return cur; }
-		constexpr auto operator++() { return (void)(cur += step), *this; }
-		constexpr auto operator==(End end) const { return cur >= end.limit; }
-	};
-	T from{}, to{}, step{};
-public:
-	constexpr IntView(T a, T b, T d = value_v<1>): from{a}, to{b}, step{d} {}
-	constexpr IntView(T const to = {}): IntView{T{}, to} {}
-	constexpr auto begin() const { return Begin{from, step}; }
-	constexpr auto end() const { return End{to}; }
-};
+constexpr decltype(auto) front(Range auto&& r) { return *sup::begin(r); }
+constexpr decltype(auto) back(BidirRange auto&& r) { return *sup::rbegin(r); }
+template<RaRange R> constexpr decltype(auto) at(R&& r, SizeOf<R> const idx) {
+	return idx < sup::size(r) ? r[idx] : throw std::out_of_range{"sup::at"};
+} // TODO remove explicit `template`
 } // namespace sup

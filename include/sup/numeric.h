@@ -43,8 +43,8 @@ public:
 
 	constexpr auto operator<=>(Num const&) const = default;
 
-	explicit constexpr operator T() const { return raw; }
-	explicit constexpr operator bool() const { return !!raw; }
+	constexpr explicit operator T() const { return raw; }
+	constexpr explicit operator bool() const { return !!raw; }
 };
 template<typename T> Num(T) -> Num<T>;
 template<typename T> requires requires { T::value; } Num(T) ->
