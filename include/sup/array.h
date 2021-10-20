@@ -5,7 +5,7 @@
 
 namespace sup {
 template<typename T, std::size_t n> class Arr {
-	T raw[n];
+	T raw[n ? n : 1];
 	template<auto... is> constexpr Arr(std::index_sequence<is...>, auto iter)
 	: raw{((void)is, *iter++)...} {}
 public:
