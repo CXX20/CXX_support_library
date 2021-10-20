@@ -5,17 +5,17 @@
 
 namespace sup {
 template<typename T, std::size_t n> class Arr {
-	T raw[n]{};
+	T raw[n];
 	template<auto... is> constexpr Arr(std::index_sequence<is...>, auto iter)
 	: raw{((void)is, *iter++)...} {}
 public:
+	template<Convertible<T>... Us> requires (sizeof...(Us) <= n)
+	constexpr explicit(sizeof...(Us) == 1) Arr(Us&&... us)
+	: raw{SUP_FWD(us)...} {}
 	constexpr explicit Arr(RangeOf<T> auto&& range)
 	: Arr{std::make_index_sequence<n>{}, std::ranges::begin(range)} {
 		assert(std::ranges::size(range) >= n);
 	}
-	template<Convertible<T>... Us> requires (sizeof...(Us) <= n)
-	constexpr explicit(sizeof...(Us) == 1) Arr(Convertible<T> auto&&... ts)
-	: raw{SUP_FWD(ts)...} {}
 	constexpr auto& operator[](std::size_t const i) const { return raw[i]; }
 	constexpr auto& operator[](std::size_t const i) { return raw[i]; }
 	friend constexpr auto begin(Fwd<Arr> auto& self) { return self.raw; }
