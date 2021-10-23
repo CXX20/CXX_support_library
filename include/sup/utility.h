@@ -68,9 +68,9 @@ template<typename T> class Uninit {
 		std::aligned_storage_t<sizeof(T), alignof(T)> rt;
 	};
 public:
-	friend constexpr void operator,(Fwd<T> auto&& t, Fwd<Uninit> auto&& me) {
-		if (!std::is_constant_evaluated()) new (&me.rt) T{SUP_FWD(t)};
-		else std::construct_at(me.ct, SUP_FWD(t));
+	friend constexpr void operator,(Fwd<T> auto&& t, Uninit& me) {
+		std::is_constant_evaluated() ?
+			std::construct_at(me.ct, SUP_FWD(t)) : new (&me.rt) T{SUP_FWD(t)};
 	}
 	constexpr Uninit() {
 		if (std::is_constant_evaluated()) ct = Alloc{}.allocate(1);
@@ -79,12 +79,12 @@ public:
 		if (std::is_constant_evaluated()) Alloc{}.deallocate(ct, 1);
 	}
 	[[nodiscard]] constexpr auto& operator*() const {
-		if (std::is_constant_evaluated()) return std::as_const(*ct);
-		return *std::launder(reinterpret_cast<T const*>(&rt));
+		return std::is_constant_evaluated() ? std::as_const(*ct) :
+			*std::launder(reinterpret_cast<T const*>(&rt));
 	}
 	[[nodiscard]] constexpr auto& operator*() {
-		if (std::is_constant_evaluated()) return *ct;
-		return *std::launder(reinterpret_cast<T*>(&rt));
+		return std::is_constant_evaluated() ?
+			*ct : *std::launder(reinterpret_cast<T*>(&rt));
 	}
 	constexpr auto operator->() const { return std::addressof(**this); }
 	constexpr auto operator->() { return std::addressof(**this); }
