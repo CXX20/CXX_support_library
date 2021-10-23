@@ -18,15 +18,17 @@ public:
 	constexpr auto index() const { return tag; }
 };
 
-template<typename T, typename... Ts> // TODO return `void`/refs
-constexpr auto visit(auto&& f, Enum<T, Ts...> const& enum_) {
+template<typename T, typename... Ts>
+constexpr auto visit(auto&& fn, Enum<T, Ts...> const& enum_)
+-> decltype(SUP_FWD(fn)(T{})) {
+	Uninit<decltype(SUP_FWD(fn)(T{}))> ret;
 	auto seq = std::make_index_sequence<sizeof...(Ts) + 1>{};
-	return [&]<auto... is>(auto&& f, std::index_sequence<is...>, auto... us) {
-		Uninit<decltype(SUP_FWD(f)(T{}))> ret;
+	return [&]<auto... is>(auto&& fn, std::index_sequence<is...>, auto... us)
+			-> decltype(auto) {
 		if ((... || (enum_.index() == is && (
-			ret.construct(SUP_FWD(f)(typename decltype(us)::type{})), true
+			(SUP_FWD(fn)(typename decltype(us)::type{}), ret), true
 		)))) return *ret;
-	}(SUP_FWD(f), seq, type_v<T>, type_v<Ts>...);
+	}(SUP_FWD(fn), seq, type_v<T>, type_v<Ts>...);
 }
 
 template<typename T, typename E>
