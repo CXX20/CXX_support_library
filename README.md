@@ -36,7 +36,7 @@ visit(sup::Overload{ // see "utility"
 Zero-cost type-safe wrappers for C arithmetic types:
 ```c++
 //-2 < 1u; // `false` with raw C types, compile-time error with SUP wrappers
-//unsigned short s1 = 0, s2 = 1, s3 = s1 - s2; // undefined behavior with raw C types, compile-time error with SUP wrappers
+//unsigned short s1 = 0, s2 = 1, s3 = s1 - s2; // UB with C types, compile-time error with SUP
 
 sup::U8 u8 = 42_c; // for `_c` see Boost.Hana
 sup::U16 u16 = u8;
