@@ -16,7 +16,7 @@ template<auto i, typename... Ts> using At =
 
 template<typename T, typename... Us> auto constexpr find_v = [] {
 	bool constexpr which[]{std::same_as<T, Us>...};
-	for (auto& b: which) if (b) return &b - which.data();
+	for (auto& b: which) if (b) return &b - which;
 }();
 } // namespace pack
 

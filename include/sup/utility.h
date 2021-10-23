@@ -56,4 +56,35 @@ public:
 	constexpr auto get() const { return raw; }
 	constexpr explicit operator M C::*() const { return get(); }
 };
+
+/// Note: should not be used with arrays of `T`s if `sizeof(T) < sizeof(T*)`
+/// because it causes memory overhead required for the compile-time fallback.
+template<typename T> class Uninit {
+	using Alloc = std::allocator<T>;
+	union {
+		T* ct;
+		std::aligned_storage_t<sizeof(T), alignof(T)> rt;
+	};
+public:
+	constexpr Uninit() {
+		if (std::is_constant_evaluated()) ct = Alloc{}.allocate(1);
+	}
+	constexpr ~Uninit() {
+		if (std::is_constant_evaluated()) Alloc{}.deallocate(ct, 1);
+	}
+	[[nodiscard]] constexpr auto& operator*() const {
+		if (std::is_constant_evaluated()) return std::as_const(*ct);
+		return *std::launder(reinterpret_cast<T const*>(&rt));
+	}
+	[[nodiscard]] constexpr auto& operator*() {
+		if (std::is_constant_evaluated()) return *ct;
+		return *std::launder(reinterpret_cast<T*>(&rt));
+	}
+	constexpr auto operator->() const { return std::addressof(**this); }
+	constexpr auto operator->() { return std::addressof(**this); }
+	constexpr void construct(auto&&... args) {
+		if (!std::is_constant_evaluated()) new (&rt) T{SUP_FWD(args)...};
+		else std::construct_at(ct, SUP_FWD(args)...);
+	}
+};
 } // namespace sup

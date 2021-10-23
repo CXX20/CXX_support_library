@@ -23,12 +23,12 @@ public:
 	constexpr auto& operator[](std::size_t const i) const { return raw[i]; }
 	constexpr auto& operator[](std::size_t const i) { return raw[i]; }
 	template<auto i> friend constexpr auto&& get(Fwd<Arr> auto&& self) {
-		static_assert(i < n);
+		static_assert(i < n, "get(Arr<>) index out of bounds");
 		return forward_as<decltype(self)>(self[i]);
 	}
 };
 template<typename T, typename... Ts> Arr(T&&, Ts&&...) ->
-	Arr<std::remove_cvref_t<T>, sizeof...(Ts) + 1u>;
+	Arr<std::remove_cvref_t<T>, sizeof...(Ts) + 1>;
 } // namespace sup
 
 namespace std {
@@ -36,7 +36,7 @@ template<typename T, auto n> struct tuple_size<sup::Arr<T, n>> {
 	static auto constexpr value = n;
 };
 template<auto i, typename T, auto n> struct tuple_element<i, sup::Arr<T, n>> {
-	static_assert(i < n);
+	static_assert(i < n, "tuple_element<Arr<>> index out of bounds");
 	using type = T;
 };
 } // namespace std

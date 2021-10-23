@@ -18,14 +18,15 @@ public:
 	constexpr auto index() const { return tag; }
 };
 
-template<typename... Ts> auto visit(auto fn, Enum<Ts...> const& enumeration) {
-	return [&]<std::size_t... is>(std::index_sequence<is...>) {
-		Uninit<decltype(fn(pack::At<0, Ts...>{}))> ret;
-		if ((... || (enumeration.index() == is ?
-				ret.init(fn(pack::At<is, Ts...>{})), true : false)))
-			return ret.get();
-		assert(false);
-	}(std::make_index_sequence<sizeof...(Ts)>{});
+template<typename T, typename... Ts> // TODO return `void`/refs
+constexpr auto visit(auto&& f, Enum<T, Ts...> const& enum_) {
+	auto seq = std::make_index_sequence<sizeof...(Ts) + 1>{};
+	return [&]<auto... is>(auto&& f, std::index_sequence<is...>, auto... us) {
+		Uninit<decltype(SUP_FWD(f)(T{}))> ret;
+		if ((... || (enum_.index() == is && (
+			ret.construct(SUP_FWD(f)(typename decltype(us)::type{})), true
+		)))) return *ret;
+	}(SUP_FWD(f), seq, type_v<T>, type_v<Ts>...);
 }
 
 template<typename T, typename E>
