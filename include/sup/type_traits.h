@@ -15,8 +15,8 @@ template<auto i, typename... Ts> using At =
 	std::tuple_element_t<i, std::tuple<Ts...>>;
 
 template<typename T, typename... Us> auto constexpr find_v = [] {
-	bool constexpr which[]{std::same_as<T, Us>...};
-	for (auto& b: which) if (b) return &b - which;
+	bool constexpr all[]{std::same_as<T, Us>...};
+	for (auto& b: all) if (b) return &b - all;
 }();
 } // namespace pack
 
@@ -24,9 +24,10 @@ template<typename T, typename... As> concept Constructible =
 	requires(As&&... args) { T{SUP_FWD(args)...}; };
 template<typename T, typename U> concept Convertible =
 	requires(T t) { U{t}; };
-template<typename T, typename U> concept Fwd =
-	std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>> &&
-	Convertible<T&&, U>;
+template<typename T, typename U> concept Fwd = Convertible<T&&, U> && (
+	std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>> ||
+	std::derived_from<std::remove_cvref_t<T>, std::remove_cvref_t<U>>
+);
 
 template<typename T> std::type_identity<T> constexpr type_v;
 

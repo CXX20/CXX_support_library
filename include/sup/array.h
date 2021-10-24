@@ -2,6 +2,7 @@
 
 #include "utility.h"
 #include <cassert>
+#include <ranges>
 
 namespace sup {
 template<typename T, std::size_t n> class Arr {
@@ -12,7 +13,7 @@ public:
 	template<Convertible<T>... Us> requires (sizeof...(Us) <= n)
 	constexpr explicit(sizeof...(Us) == 1) Arr(Us&&... us)
 	: raw{SUP_FWD(us)...} {}
-	constexpr explicit Arr(RangeOf<T> auto&& range)
+	template<RangeOf<T> R> constexpr explicit Arr(R&& range)
 	: Arr{std::make_index_sequence<n>{}, std::ranges::begin(range)} {
 		assert(std::ranges::size(range) >= n);
 	}

@@ -8,10 +8,8 @@
 #include <utility>
 
 namespace sup {
-template<typename T, typename U>
-concept RangeOf = std::ranges::range<T> && requires(T t) {
-	requires std::same_as<
-			U, std::remove_cvref_t<decltype(*std::ranges::begin(t))>>;
+template<typename R, typename E> concept RangeOf = requires(R range) {
+	requires Convertible<decltype(*std::ranges::begin(range)), E>;
 };
 
 template<typename T> constexpr auto&& forward_as(auto&& u) {
