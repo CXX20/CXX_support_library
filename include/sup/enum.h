@@ -1,6 +1,7 @@
 #pragma once
 
 #include "array.h"
+#include "uninit.h"
 
 namespace sup {
 template<typename... Ts> class Enum {
@@ -26,7 +27,7 @@ constexpr auto visit(auto&& fn, Enum<T, Ts...> const& enum_)
 	return [&]<auto... is>(auto&& fn, std::index_sequence<is...>, auto... us)
 			-> decltype(auto) {
 		if ((... || (enum_.index() == is && (
-			(SUP_FWD(fn)(typename decltype(us)::type{}), ret), true
+			SUP_FWD(fn)(typename decltype(us)::type{}), ret, true
 		)))) return *ret;
 		assert(false);
 	}(SUP_FWD(fn), seq, type_v<T>, type_v<Ts>...);

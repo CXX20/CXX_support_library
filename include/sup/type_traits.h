@@ -23,11 +23,10 @@ template<typename T, typename... Us> auto constexpr find_v = [] {
 template<typename T, typename... As> concept Constructible =
 	requires(As&&... args) { T{SUP_FWD(args)...}; };
 template<typename T, typename U> concept Convertible =
-	requires(T t) { U{t}; };
-template<typename T, typename U> concept Fwd = Convertible<T&&, U> && (
-	std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>> ||
-	std::derived_from<std::remove_cvref_t<T>, std::remove_cvref_t<U>>
-);
+	requires(T&& t) { U{SUP_FWD(t)}; };
+template<typename T, typename U> concept Fwd = Convertible<T, U> && (
+		std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>> ||
+		std::derived_from<std::remove_cvref_t<T>, std::remove_cvref_t<U>>);
 
 template<typename T> std::type_identity<T> constexpr type_v;
 

@@ -39,64 +39,12 @@ template<typename F> Defer(F&&) -> Defer<F>;
 
 template<typename C, typename M> class Member {
 	M C::* raw;
-
 public:
-	consteval Member(M C::* p): raw{p} { if (!p) throw std::exception{}; }
-
-	constexpr decltype(auto) operator()(auto&& instance, auto&&... args) const
-	requires requires { (instance.*raw)(SUP_FWD(args)...); } {
-		return (instance.*raw)(SUP_FWD(args)...);
-	}
-	constexpr auto&& operator()(Fwd<C> auto&& instance) const
-	requires std::is_member_object_pointer_v<M C::*> {
+	consteval Member(M C::* const p): raw{p} { if (!p) throw std::exception{}; }
+	constexpr auto&& operator()(Fwd<C> auto&& instance) const {
 		return SUP_FWD(instance).*raw;
 	}
-	
 	constexpr auto get() const { return raw; }
 	constexpr explicit operator M C::*() const { return get(); }
 };
-
-/// Note: should not be used with arrays of `T`s if `sizeof(T) < sizeof(T*)`
-/// because it causes memory overhead required for the compile-time fallback.
-/// Constructs its `T` via the `operator,` to allow the `Uninit<void>` hack.
-template<typename T> class Uninit {
-	using Alloc = std::allocator<T>;
-	union {
-		T* ct;
-		std::aligned_storage_t<sizeof(T), alignof(T)> rt;
-	};
-public:
-	friend constexpr void operator,(Fwd<T> auto&& t, Uninit& me) {
-		std::is_constant_evaluated() ?
-			std::construct_at(me.ct, SUP_FWD(t)) : new (&me.rt) T{SUP_FWD(t)};
-	}
-	constexpr Uninit() {
-		if (std::is_constant_evaluated()) ct = Alloc{}.allocate(1);
-	}
-	constexpr ~Uninit() {
-		if (std::is_constant_evaluated()) Alloc{}.deallocate(ct, 1);
-	}
-	[[nodiscard]] constexpr auto& operator*() const {
-		return std::is_constant_evaluated() ? std::as_const(*ct) :
-			*std::launder(reinterpret_cast<T const*>(&rt));
-	}
-	[[nodiscard]] constexpr auto& operator*() {
-		return std::is_constant_evaluated() ?
-			*ct : *std::launder(reinterpret_cast<T*>(&rt));
-	}
-	constexpr auto operator->() const { return std::addressof(**this); }
-	constexpr auto operator->() { return std::addressof(**this); }
-};
-template<typename T> class Uninit<T&>
-: public Uninit<std::reference_wrapper<T>> {
-	using Base = Uninit<std::reference_wrapper<T>>;
-public:
-	[[nodiscard]] constexpr T const& operator*() const {
-		return Base::operator*();
-	}
-	[[nodiscard]] constexpr T& operator*() { return Base::operator*(); }
-	constexpr auto operator->() const { return std::addressof(**this); }
-	constexpr auto operator->() { return std::addressof(**this); }
-};
-template<> class Uninit<void> { public: constexpr void operator*() const {} };
 } // namespace sup
