@@ -2,7 +2,6 @@
 
 #include "utility.h"
 #include <cassert>
-#include <ranges>
 
 namespace sup {
 template<typename T, std::size_t n> class Arr {
@@ -37,7 +36,6 @@ template<typename T, auto n> struct tuple_size<sup::Arr<T, n>> {
 	static auto constexpr value = n;
 };
 template<auto i, typename T, auto n> struct tuple_element<i, sup::Arr<T, n>> {
-	static_assert(i < n, "tuple_element<Arr<>> index out of bounds");
-	using type = T;
+	using type = decltype(get<i>(std::declval<sup::Arr<T, n>>()));
 };
 } // namespace std

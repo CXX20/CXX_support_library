@@ -2,8 +2,6 @@
 
 #include "type_traits.h"
 #include <exception>
-#include <functional>
-#include <memory>
 #include <ranges>
 #include <utility>
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "utility.h"
+#include <functional>
+#include <memory>
 
 namespace sup {
 /// Note: should not be used with arrays of `T`s if `sizeof(T) < sizeof(T*)`
@@ -20,7 +22,7 @@ public:
 		if (std::is_constant_evaluated()) ct = Alloc{}.allocate(1);
 	}
 	constexpr ~Uninit() {
-		if (std::is_constant_evaluated()) Alloc{}.deallocate(ct, 1);
+		if (std::is_constant_evaluated()) ct->~T(), Alloc{}.deallocate(ct, 1);
 	}
 	constexpr void emplace(auto&&... args) {
 		std::is_constant_evaluated() ? std::construct_at(ct, SUP_FWD(args)...) :
@@ -31,8 +33,8 @@ public:
 			*std::launder(reinterpret_cast<T const*>(&rt));
 	}
 	[[nodiscard]] constexpr auto& operator*() {
-		return std::is_constant_evaluated() ?
-			*ct : *std::launder(reinterpret_cast<T*>(&rt));
+		return std::is_constant_evaluated() ? *ct :
+			*std::launder(reinterpret_cast<T*>(&rt));
 	}
 	constexpr auto operator->() const { return std::addressof(**this); }
 	constexpr auto operator->() { return std::addressof(**this); }
