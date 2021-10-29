@@ -1,7 +1,6 @@
 #pragma once
 
 #include "utility.h"
-#include <cassert>
 
 namespace sup {
 template<typename T, std::size_t n> class Arr {

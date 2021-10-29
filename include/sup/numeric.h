@@ -5,6 +5,15 @@
 #include <limits>
 
 namespace sup {
+template<typename T> concept Numeric = requires { std::numeric_limits<T>{}; };
+template<typename T> concept Floating =
+	Numeric<T> && !std::numeric_limits<T>::is_integer;
+template<typename T> concept Integral = Numeric<T> && !Floating<T>;
+template<typename T> concept Signed =
+	Integral<T> && std::numeric_limits<T>::is_signed;
+template<typename T> concept Unsigned = Integral<T> && !Signed<T>;
+template<typename T> concept Boolean = Unsigned<T> && !requires(T t) { ++t; };
+
 template<std::integral T> class Num { // TODO float, bool, T*, non-fundamental
 	T raw{};
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "type_traits.h"
+#include <cassert>
 #include <exception>
 #include <ranges>
 #include <utility>
@@ -35,10 +36,10 @@ public:
 };
 template<typename F> Defer(F&&) -> Defer<F>;
 
-template<typename C, typename M> class Member {
+template<typename C, typename M> class Field {
 	M C::* raw;
 public:
-	consteval Member(M C::* const p): raw{p} { if (!p) throw std::exception{}; }
+	consteval Field(M C::* const p): raw{p} { if (!p) throw std::exception{}; }
 	constexpr auto&& operator()(Fwd<C> auto&& instance) const {
 		return SUP_FWD(instance).*raw;
 	}

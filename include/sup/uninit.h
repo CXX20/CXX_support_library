@@ -5,9 +5,9 @@
 #include <memory>
 
 namespace sup {
+/// Constructs its `T` via the `operator,` to allow the `Uninit<void>` hack.
 /// Note: should not be used with arrays of `T`s if `sizeof(T) < sizeof(T*)`
 /// because it causes memory overhead required for the compile-time fallback.
-/// Constructs its `T` via the `operator,` to allow the `Uninit<void>` hack.
 template<typename T> class Uninit {
 	using Alloc = std::allocator<T>;
 	union {
@@ -50,8 +50,7 @@ public:
 	constexpr auto operator->() const { return std::addressof(**this); }
 	constexpr auto operator->() { return std::addressof(**this); }
 };
-template<typename T> requires std::same_as<std::remove_cv_t<T>, void>
-struct Uninit<T> {
+template<> struct Uninit<void> {
 	constexpr void operator*() const {}
 	constexpr void emplace() {}
 };
