@@ -3,6 +3,7 @@
 #include "numeric.h"
 
 namespace sup {
+/// Allowed to be specialized for client-defined types.
 template<typename T> class Opt;
 template<typename T> class Opt<T&> {
 	T* raw{};

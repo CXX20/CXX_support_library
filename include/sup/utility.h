@@ -2,15 +2,9 @@
 
 #include "type_traits.h"
 #include <cassert>
-#include <exception>
-#include <ranges>
 #include <utility>
 
 namespace sup {
-template<typename R, typename E> concept RangeOf = requires(R range) {
-	requires Convertible<decltype(*std::ranges::begin(range)), E>;
-};
-
 template<typename T> constexpr auto&& forward_as(auto&& u) {
 	if constexpr (std::is_lvalue_reference_v<T>) {
 		static_assert(!std::is_rvalue_reference_v<decltype(u)>);
@@ -39,7 +33,7 @@ template<typename F> Defer(F&&) -> Defer<F>;
 template<typename C, typename M> class Field {
 	M C::* raw;
 public:
-	consteval Field(M C::* const p): raw{p} { if (!p) throw std::exception{}; }
+	consteval Field(M C::* const p): raw{p} { if (!p) throw; }
 	constexpr auto&& operator()(Fwd<C> auto&& instance) const {
 		return SUP_FWD(instance).*raw;
 	}

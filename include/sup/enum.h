@@ -19,18 +19,15 @@ public:
 	constexpr auto index() const { return tag; }
 };
 
-template<typename T, typename... Ts>
-constexpr auto visit(auto&& fn, Enum<T, Ts...> const& enum_)
--> decltype(SUP_FWD(fn)(T{})) {
-	Uninit<decltype(SUP_FWD(fn)(T{}))> ret;
-	auto const seq = std::index_sequence_for<T, Ts...>{};
-	return [&]<auto... is>(auto&& fn, std::index_sequence<is...>, auto... us)
+template<typename F, typename T, typename... Ts>
+constexpr std::invoke_result_t<F, T> visit(F&& f, Enum<T, Ts...> const& enum_) {
+	Uninit<std::invoke_result_t<F, T>> ret;
+	return [&]<auto... is>(std::index_sequence<is...>, auto... us)
 			-> decltype(auto) {
-		if ((... || (enum_.index() == is && (
-			SUP_FWD(fn)(typename decltype(us)::type{}), ret, true
-		)))) return *ret;
-		assert(false);
-	}(SUP_FWD(fn), seq, type_v<T>, type_v<Ts>...);
+		if ((... || (enum_.index() == is && ( // switch-caseness hint
+			(f(typename decltype(us)::type{}), ret), true
+		)))) return *ret; else assert(false);
+	}(std::index_sequence_for<T, Ts...>{}, type_v<T>, type_v<Ts>...);
 }
 
 template<typename T, typename E> class EnumArr: public Arr<T, E::size()> {

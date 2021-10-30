@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utility.h"
+#include "ranges.h"
 
 namespace sup {
 template<typename T, std::size_t n> class Arr {
@@ -35,6 +35,7 @@ template<typename T, auto n> struct tuple_size<sup::Arr<T, n>> {
 	static auto constexpr value = n;
 };
 template<auto i, typename T, auto n> struct tuple_element<i, sup::Arr<T, n>> {
-	using type = decltype(get<i>(std::declval<sup::Arr<T, n>>()));
+	static_assert(i < n, "tuple_element<Arr<>> index out of bounds");
+	using type = T;
 };
 } // namespace std
