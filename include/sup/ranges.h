@@ -4,14 +4,13 @@
 #include <ranges>
 
 namespace sup {
-template<typename R, typename E> concept RangeOf = requires(R range) {
-	requires Convertible<decltype(*std::ranges::begin(range)), E>;
-};
-
 template<typename R> using SizeType =
 	decltype(std::ranges::size(std::declval<R>()));
 template<typename R> using ValueType =
 	std::remove_cvref_t<decltype(*std::ranges::begin(std::declval<R&>()))>;
+
+template<typename R, typename E> concept RangeOf =
+	requires(R range) { requires Convertible<ValueType<R>, E>; };
 
 template<typename R> class RaiiSize {
 	SizeType<R> raw;
