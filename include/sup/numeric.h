@@ -5,7 +5,8 @@
 #include <limits>
 
 namespace sup {
-template<typename T> concept Numeric = requires { std::numeric_limits<T>{}; };
+template<typename T> concept Numeric =
+	requires { typename std::numeric_limits<T>; };
 template<typename T> concept Floating =
 	Numeric<T> && !std::numeric_limits<T>::is_integer;
 template<typename T> concept Integral = Numeric<T> && !Floating<T>;

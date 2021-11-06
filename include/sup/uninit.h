@@ -15,13 +15,13 @@ template<typename T> class Uninit {
 		std::aligned_storage_t<sizeof(T), alignof(T)> rt;
 	};
 public:
-	friend constexpr void operator,(Fwd<T> auto&& t, Uninit& me) {
+	friend constexpr void operator,(auto&& t, Uninit& me) {
 		me.emplace(SUP_FWD(t));
 	}
 	constexpr Uninit() {
 		if (std::is_constant_evaluated()) ct = Alloc{}.allocate(1);
 	}
-	constexpr ~Uninit() {
+	constexpr ~Uninit() noexcept(std::is_nothrow_destructible_v<T>) {
 		if (std::is_constant_evaluated()) ct->~T(), Alloc{}.deallocate(ct, 1);
 	}
 	constexpr void emplace(auto&&... args) {

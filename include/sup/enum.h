@@ -8,9 +8,7 @@ template<typename... Ts> class Enum {
 	static_assert(sizeof...(Ts) <= UINT_LEAST8_MAX, "too many enumerators");
 	std::uint_least8_t tag{};
 public:
-	static constexpr auto size() {
-		return std::integral_constant<decltype(tag), sizeof...(Ts)>{};
-	}
+	constexpr decltype(tag) size() const { return sizeof...(Ts); }
 	template<typename U> static decltype(tag) constexpr find_v =
 		pack::find_v<U, Ts...>;
 	constexpr Enum() {}
